@@ -1,0 +1,5 @@
+{
+  "rewrites": [
+    { "source": "/ptcg-api/:path*", "destination": "https://api.pokemontcg.io/v2/:path*" }
+  ]
+}
