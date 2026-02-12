@@ -3,8 +3,9 @@
 </p>
 
 <p align="center">
-  <a href="#-get-running"><img src="https://img.shields.io/badge/🚀_GET_STARTED-Click_Here-ef4444?style=for-the-badge" /></a>
-  <a href="#-deploy-free"><img src="https://img.shields.io/badge/🌐_DEPLOY_FREE-Vercel-000000?style=for-the-badge&logo=vercel" /></a>
+  <a href="https://pokedeck-builder.vercel.app"><img src="https://img.shields.io/badge/🌐_LIVE_DEMO-Play_Now-ef4444?style=for-the-badge" /></a>
+  <a href="#-get-running"><img src="https://img.shields.io/badge/🚀_GET_STARTED-Click_Here-22d3ee?style=for-the-badge" /></a>
+  <a href="#-deploy-free"><img src="https://img.shields.io/badge/▲_DEPLOY_FREE-Vercel-000000?style=for-the-badge&logo=vercel" /></a>
 </p>
 
 <p align="center">
@@ -37,6 +38,33 @@
 </td>
 </tr>
 </table>
+
+<br/>
+
+<p align="center">
+  <img src="https://capsule-render.vercel.app/api?type=rect&color=gradient&customColorList=12,9,5&height=2&section=header" width="60%" />
+</p>
+
+## 📸 Screenshots
+
+<p align="center">
+  <img src="screenshots/homepage.png" width="100%" />
+</p>
+<p align="center"><sub><b>Card Database</b> — Browse 20,000+ cards with type, set, format & supertype filters</sub></p>
+
+<br/>
+
+<p align="center">
+  <img src="screenshots/display.png" width="70%" />
+</p>
+<p align="center"><sub><b>Card Details</b> — Full card info with attacks, HP, legality & one-click add to deck</sub></p>
+
+<br/>
+
+<p align="center">
+  <img src="screenshots/meta.png" width="100%" />
+</p>
+<p align="center"><sub><b>Meta Decks</b> — Tournament-ready deck lists with strategy tips & one-click loading</sub></p>
 
 <br/>
 
@@ -86,7 +114,7 @@
 ## 🚀 Get Running
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/pokedeck-builder.git
+git clone https://github.com/ZeroZulu/pokedeck-builder.git
 cd pokedeck-builder
 npm install
 npm run dev           # → http://localhost:3000
@@ -118,6 +146,32 @@ npx vercel --prod
 | **GitHub Pages** | `npm run deploy` | Unlimited |
 
 </details>
+
+<br/>
+
+## 🏆 Updating Meta Decks
+
+Meta decks are stored in `public/meta.json` — no code changes needed! Just edit the JSON file:
+
+```json
+{
+  "lastUpdated": "2025-02-12",
+  "archetypes": [
+    {
+      "name": "Dragapult ex",
+      "tier": "S",
+      "type": "Psychic",
+      "desc": "Top-tier spread damage deck...",
+      "tips": "Set up Dragapult ex ASAP...",
+      "pokemon": [{ "name": "Dragapult ex", "count": 2 }],
+      "trainers": [...],
+      "energy": [...]
+    }
+  ]
+}
+```
+
+Edit on GitHub → commit → Vercel auto-redeploys. Done.
 
 <br/>
 
