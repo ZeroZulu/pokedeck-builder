@@ -1,14 +1,5 @@
 {
-  "framework": "vite",
-  "buildCommand": "vite build",
-  "outputDirectory": "dist",
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/$1" }
-  ],
-  "functions": {
-    "api/proxy.js": {
-      "memory": 256,
-      "maxDuration": 15
-    }
-  }
+    { "source": "/ptcg-api/:path*", "destination": "https://api.pokemontcg.io/v2/:path*" }
+  ]
 }
