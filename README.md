@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=22&duration=3000&pause=1000&color=22D3EE&center=true&vCenter=true&multiline=true&repeat=true&width=600&height=80&lines=20%2C000%2B+cards+from+every+set+ever+printed;Real-time+deck+analytics+%26+validation;One-click+meta+decks+%7C+Zero+cost+hosting" />
+  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=18&duration=3000&pause=1000&color=22D3EE&center=true&vCenter=true&multiline=true&repeat=true&width=750&height=70&lines=20%2C000%2B+cards+from+every+set+ever+printed;Real-time+deck+analytics+%26+validation;One-click+meta+decks+%7C+Zero+cost+hosting" />
 </p>
 
 <br/>
