@@ -32,41 +32,28 @@ const POKEMON_TYPES = ["Colorless","Darkness","Dragon","Fairy","Fighting","Fire"
 
 const delay = ms => new Promise(r => setTimeout(r, ms));
 
-// ─── API Service with caching + Vercel proxy support ────────────────
+// ─── API Service with caching ───────────────────────────────────────
 const searchCache = new Map();
 const CACHE_TTL = 5 * 60 * 1000;
 const SETS_CACHE_TTL = 24 * 60 * 60 * 1000;
 
-// In production (Vercel): use serverless proxy to avoid CORS & hide API key
-// In development (localhost): call API directly
+// In production: use /ptcg-api/ path (Vercel rewrites to real API — same origin, no CORS)
+// In development: call API directly
 const IS_PROD = import.meta.env?.PROD;
-if (IS_PROD) console.log("🔀 Using Vercel proxy for API requests");
-else console.log("🔧 Dev mode — calling Pokemon TCG API directly");
+const BASE_URL = IS_PROD ? "/ptcg-api" : API;
+const API_KEY = import.meta.env?.VITE_POKEMONTCG_API_KEY;
+
+if (IS_PROD) console.log("🔀 Using Vercel rewrite proxy (no CORS)");
+else console.log("🔧 Dev mode — calling API directly");
+if (API_KEY) console.log("✅ API key detected — 20,000 requests/day");
 
 const svc = {
-  // Build the correct URL depending on environment
-  buildUrl(endpoint, params) {
-    if (IS_PROD) {
-      // Production: call our own /api/proxy serverless function
-      const p = new URLSearchParams({ endpoint, ...params });
-      return `/api/proxy?${p}`;
-    } else {
-      // Development: call API directly
-      const p = new URLSearchParams(params);
-      return `${API}/${endpoint}?${p}`;
-    }
-  },
-
   async fetchWithRetry(url, signal, retries = 2, backoff = 2000) {
     for (let i = 0; i < retries; i++) {
       try {
         const opts = {};
         if (signal) opts.signal = signal;
-        // In dev mode, add API key directly if available
-        if (!IS_PROD) {
-          const apiKey = import.meta.env?.VITE_POKEMONTCG_API_KEY;
-          if (apiKey) opts.headers = { 'X-Api-Key': apiKey };
-        }
+        if (API_KEY) opts.headers = { 'X-Api-Key': API_KEY };
         const r = await fetch(url, opts);
         if (r.status === 429) {
           console.warn(`Rate limited, retry ${i + 1}/${retries} in ${backoff}ms`);
@@ -92,10 +79,9 @@ const svc = {
       return cached.data;
     }
 
-    const params = { page, pageSize: ps, orderBy: "-set.releaseDate" };
-    if (q) params.q = q;
-    const url = this.buildUrl("cards", params);
-    const data = await this.fetchWithRetry(url, signal);
+    const p = new URLSearchParams({ page, pageSize: ps, orderBy: "-set.releaseDate" });
+    if (q) p.set("q", q);
+    const data = await this.fetchWithRetry(`${BASE_URL}/cards?${p}`, signal);
 
     searchCache.set(cacheKey, { data, time: Date.now() });
     if (searchCache.size > 100) {
@@ -118,8 +104,7 @@ const svc = {
       }
     } catch {}
 
-    const url = this.buildUrl("sets", { orderBy: "-releaseDate", pageSize: 250 });
-    const r = await this.fetchWithRetry(url);
+    const r = await this.fetchWithRetry(`${BASE_URL}/sets?orderBy=-releaseDate&pageSize=250`);
     const sets = r.data || [];
 
     try {
