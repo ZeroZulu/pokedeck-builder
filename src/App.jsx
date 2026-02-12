@@ -32,23 +32,41 @@ const POKEMON_TYPES = ["Colorless","Darkness","Dragon","Fairy","Fighting","Fire"
 
 const delay = ms => new Promise(r => setTimeout(r, ms));
 
-// ─── API Service with caching + abort support ───────────────────────
-const searchCache = new Map(); // in-memory cache for card searches
-const CACHE_TTL = 5 * 60 * 1000; // 5 min cache for searches
-const SETS_CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hour cache for sets
+// ─── API Service with caching + Vercel proxy support ────────────────
+const searchCache = new Map();
+const CACHE_TTL = 5 * 60 * 1000;
+const SETS_CACHE_TTL = 24 * 60 * 60 * 1000;
 
-// Auto-detect API key from environment (set VITE_POKEMONTCG_API_KEY in .env)
-const API_KEY = typeof import.meta !== 'undefined' ? import.meta.env?.VITE_POKEMONTCG_API_KEY : null;
-if (API_KEY) console.log("✅ Pokemon TCG API key detected — 20,000 requests/day");
-else console.log("⚠️ No API key — limited to 1,000 requests/day. Add VITE_POKEMONTCG_API_KEY to .env");
+// In production (Vercel): use serverless proxy to avoid CORS & hide API key
+// In development (localhost): call API directly
+const IS_PROD = import.meta.env?.PROD;
+if (IS_PROD) console.log("🔀 Using Vercel proxy for API requests");
+else console.log("🔧 Dev mode — calling Pokemon TCG API directly");
 
 const svc = {
+  // Build the correct URL depending on environment
+  buildUrl(endpoint, params) {
+    if (IS_PROD) {
+      // Production: call our own /api/proxy serverless function
+      const p = new URLSearchParams({ endpoint, ...params });
+      return `/api/proxy?${p}`;
+    } else {
+      // Development: call API directly
+      const p = new URLSearchParams(params);
+      return `${API}/${endpoint}?${p}`;
+    }
+  },
+
   async fetchWithRetry(url, signal, retries = 2, backoff = 2000) {
     for (let i = 0; i < retries; i++) {
       try {
         const opts = {};
         if (signal) opts.signal = signal;
-        if (API_KEY) opts.headers = { 'X-Api-Key': API_KEY };
+        // In dev mode, add API key directly if available
+        if (!IS_PROD) {
+          const apiKey = import.meta.env?.VITE_POKEMONTCG_API_KEY;
+          if (apiKey) opts.headers = { 'X-Api-Key': apiKey };
+        }
         const r = await fetch(url, opts);
         if (r.status === 429) {
           console.warn(`Rate limited, retry ${i + 1}/${retries} in ${backoff}ms`);
@@ -68,21 +86,18 @@ const svc = {
   },
 
   async search(q, page = 1, ps = 20, signal) {
-    // Check cache first
     const cacheKey = `${q}|${page}|${ps}`;
     const cached = searchCache.get(cacheKey);
     if (cached && Date.now() - cached.time < CACHE_TTL) {
-      console.log('Cache hit:', cacheKey);
       return cached.data;
     }
 
-    const p = new URLSearchParams({ page, pageSize: ps, orderBy: "-set.releaseDate" });
-    if (q) p.set("q", q);
-    const data = await this.fetchWithRetry(`${API}/cards?${p}`, signal);
+    const params = { page, pageSize: ps, orderBy: "-set.releaseDate" };
+    if (q) params.q = q;
+    const url = this.buildUrl("cards", params);
+    const data = await this.fetchWithRetry(url, signal);
 
-    // Store in cache
     searchCache.set(cacheKey, { data, time: Date.now() });
-    // Evict old entries if cache gets large
     if (searchCache.size > 100) {
       const oldest = [...searchCache.entries()].sort((a, b) => a[1].time - b[1].time)[0];
       searchCache.delete(oldest[0]);
@@ -92,7 +107,6 @@ const svc = {
   },
 
   async loadSets() {
-    // Try localStorage first (cached for 24 hours)
     try {
       const stored = localStorage.getItem("ptcg-sets-cache");
       if (stored) {
@@ -104,11 +118,10 @@ const svc = {
       }
     } catch {}
 
-    // Fetch fresh from API
-    const r = await this.fetchWithRetry(`${API}/sets?orderBy=-releaseDate&pageSize=250`);
+    const url = this.buildUrl("sets", { orderBy: "-releaseDate", pageSize: 250 });
+    const r = await this.fetchWithRetry(url);
     const sets = r.data || [];
 
-    // Cache in localStorage
     try {
       localStorage.setItem("ptcg-sets-cache", JSON.stringify({ data: sets, time: Date.now() }));
     } catch {}
